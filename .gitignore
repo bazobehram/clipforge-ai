@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.pytest_cache/
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+
+# ClipForge runtime data
+data/downloads/*
+!data/downloads/.gitkeep
+data/output/*
+!data/output/.gitkeep
+data/temp/*
+!data/temp/.gitkeep
+data/trailers/*
+!data/trailers/.gitkeep
+data/history.json
+data/jobs.json
+data/*.bak
+data/*.tmp
+
+# Archives & Logs
+*.tar.gz
+*.zip
+*.log
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

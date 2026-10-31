@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="35%" stop-color="#7c3aed" />
+      <stop offset="70%" stop-color="#9333ea" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.28" />
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.15" />
+    </radialGradient>
+    <linearGradient id="playFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f1f5f9" />
+    </linearGradient>
+    <filter id="floatShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#1e1b4b" flood-opacity="0.6"/>
+    </filter>
+    <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#fbbf24" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="url(#bgGrad)" />
+  <rect width="512" height="512" fill="url(#sunGlow)" />
+  <g filter="url(#floatShadow)">
+    <path d="M185 140 C168 130 148 142 148 162 L148 350 C148 370 168 382 185 372 L345 278 C362 268 362 244 345 234 Z" fill="url(#playFace)" />
+    <path d="M210 152 L330 262 L316 276 L196 166 Z" fill="#a855f7" opacity="0.25"/>
+    <circle cx="172" cy="185" r="8" fill="#818cf8" opacity="0.45"/>
+    <circle cx="172" cy="256" r="8" fill="#818cf8" opacity="0.45"/>
+    <circle cx="172" cy="327" r="8" fill="#818cf8" opacity="0.45"/>
+    <g filter="url(#goldGlow)">
+      <path d="M375 105 Q375 145 415 145 Q375 145 375 185 Q375 145 335 145 Q375 145 375 105 Z" fill="#facc15" />
+      <circle cx="375" cy="145" r="5" fill="#ffffff"/>
+    </g>
+    <g>
+      <path d="M120 345 Q120 370 145 370 Q120 370 120 395 Q120 370 95 370 Q120 370 120 345 Z" fill="#ffffff" opacity="0.95" />
+      <circle cx="120" cy="370" r="3" fill="#fef08a"/>
+    </g>
+    <g>
+      <path d="M140 100 Q140 115 155 115 Q140 115 140 130 Q140 115 125 115 Q140 115 140 100 Z" fill="#ffffff" opacity="0.85" />
+    </g>
+  </g>
+</svg>

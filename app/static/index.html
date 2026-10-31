@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ClipForge AI - Viral Shorts & Reels Stüdyosu</title>
+    
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ClipForge">
+    <link rel="manifest" href="/static/manifest.json?v=20260913_125500">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-v3-192.png?v=20260913_125500">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/icon-v3-512.png?v=20260913_125500">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon-v3.png?v=20260913_125500">
+    <link rel="icon" type="image/svg+xml" href="/static/icon.svg?v=20260913_125500">
+
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css?v=20260913_125500">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        // Erken oturum pre-check: Token varsa login ekranı açılışta asla görünmez
+        try {
+            var _hasToken = localStorage.getItem('clipforge_token') || (document.cookie.indexOf('auth_token=') !== -1);
+            if (!_hasToken) {
+                document.addEventListener('DOMContentLoaded', function() {
+                    var m = document.getElementById('login-modal');
+                    if (m) m.classList.remove('hidden');
+                });
+            }
+        } catch(e) {}
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white pb-16">
+
+    <!-- LOGIN MODAL / GATEKEEPER (Varsayılan gizli, token yoksa veya 401 alınırsa açılır) -->
+    <div id="login-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4 transition-all duration-300">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl shadow-indigo-500/10 space-y-5">
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-lock text-white text-xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-white">ClipForge AI Giriş</h2>
+                <p class="text-xs text-slate-400">Bu stüdyoya erişmek için yönetici şifresini girin.</p>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div class="space-y-1">
+                    <label for="login-password" class="text-xs text-slate-400 font-medium">Şifre</label>
+                    <div class="relative flex items-center">
+                        <input type="password" id="login-password" required placeholder="••••••••" 
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10">
+                        <button type="button" id="toggle-pwd-btn" class="absolute right-3 text-slate-500 hover:text-slate-300 p-1">
+                            <i class="fa-regular fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="login-error" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2.5 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="login-error-text">Hatalı şifre</span>
+                </div>
+
+                <button type="submit" id="login-submit-btn" 
+                    class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-500/25 transition-all active:scale-[0.98] text-sm flex items-center justify-center gap-2">
+                    <span>Giriş Yap</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+
+                <div class="pt-1 text-center">
+                    <span id="login-version-badge" class="text-[10px] text-slate-500 font-mono tracking-wider">v2.6.1 • Build 20260912_225900</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="border-b border-slate-850/80 bg-slate-950/80 backdrop-blur-lg sticky top-0 z-40 safe-area-top">
+        <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-2.5 cursor-pointer active:scale-95 transition-transform select-none" id="app-logo-btn" onclick="goToHomePage()" title="Ana Sayfaya Dön / Başa Git">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-md shadow-indigo-500/20">
+                    <i class="fa-solid fa-wand-magic-sparkles text-white text-xs"></i>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-base bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">ClipForge</span>
+                    <button type="button" id="app-version-badge" onclick="event.stopPropagation(); checkForNewVersion(true);" title="ClipForge Sürümü (Tıklayarak güncellemeleri kontrol edin)" class="text-[10px] bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-medium flex items-center gap-1.5 transition-all cursor-pointer">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
+                        <span id="version-text">v2.6.1</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 text-xs">
+                <button id="pwa-install-btn" class="hidden bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg shadow-md shadow-purple-600/25 flex items-center gap-1.5 transition-all active:scale-95 animate-pulse">
+                    <i class="fa-solid fa-download text-xs"></i>
+                    <span class="hidden xs:inline sm:inline">Uygulamayı Yükle</span>
+                </button>
+                <button id="open-history-btn" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-folder-open text-indigo-400"></i>
+                    <span class="hidden sm:inline">Geçmiş Projeler</span>
+                    <span id="history-badge" class="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button id="logout-btn" title="Çıkış Yap" class="bg-slate-900 hover:bg-rose-950/40 border border-slate-800 hover:border-rose-800/60 text-slate-400 hover:text-rose-300 px-2.5 py-1.5 rounded-lg transition-all">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 pt-4 sm:pt-6 space-y-6">
+        
+        <!-- STUDIO MODE TABS -->
+        <div class="flex items-center justify-center p-1 bg-slate-900/90 border border-slate-800/80 rounded-2xl max-w-md mx-auto shadow-lg backdrop-blur-md">
+            <button type="button" id="tab-mode-shorts" onclick="switchStudioMode('shorts')"
+                class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/20 cursor-pointer">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Viral Shorts & Reels</span>
+            </button>
+            <button type="button" id="tab-mode-trailer" onclick="switchStudioMode('trailer')"
+                class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all text-slate-400 hover:text-white cursor-pointer">
+                <i class="fa-solid fa-film text-purple-400"></i>
+                <span>Akıllı Fragman & Özet</span>
+                <span class="text-[9px] bg-pink-500/20 text-pink-300 border border-pink-500/30 px-1.5 py-0.2 rounded-full uppercase tracking-wider font-bold">Yeni</span>
+            </button>
+        </div>
+
+        <!-- SECTION: VIRAL SHORTS STUDIO (MEVCUT MOD) -->
+        <div id="shorts-studio-view" class="space-y-6">
+
+        <!-- INPUT FORM CARD -->
+        <div class="bg-slate-900/95 border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-xl shadow-black/50 backdrop-blur-sm space-y-4">
+            <form id="analyze-form" class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <label for="video-url" class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-brands fa-youtube text-red-500"></i> YouTube Video / Shorts Linki
+                    </label>
+                    <button type="button" id="paste-btn" class="text-xs bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all active:scale-95">
+                        <i class="fa-regular fa-clipboard"></i>
+                        <span>Panodan Yapıştır</span>
+                    </button>
+                </div>
+
+                <div class="relative flex items-center">
+                    <input type="url" id="video-url" required
+                        placeholder="https://youtu.be/... veya youtube.com/watch?v=..." 
+                        class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all pr-10">
+                    <button type="button" id="clear-url-btn" class="hidden absolute right-3 text-slate-500 hover:text-slate-300 p-1 text-sm">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Settings Row -->
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <div>
+                        <label for="vertical-mode" class="block text-[11px] font-medium text-slate-400 mb-1">9:16 Formatı</label>
+                        <select id="vertical-mode" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <option value="blur_background" selected>Bulanık Arka Plan (Önerilen)</option>
+                            <option value="crop_center">Ortadan Kırp</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="initial-count" class="block text-[11px] font-medium text-slate-400 mb-1">İlk Aday Sayısı</label>
+                        <select id="initial-count" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <option value="10" selected>10 Aday Klip (Önerilen)</option>
+                            <option value="5">5 Aday Klip (Hızlı)</option>
+                            <option value="15">15 Aday Klip (Geniş)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Main Action Button -->
+                <button type="submit" id="submit-analyze-btn" 
+                    class="w-full mt-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-sm">
+                    <i class="fa-solid fa-bolt-lightning text-yellow-300"></i>
+                    <span>Analiz Et ve En İyi Viral Adayları Çıkar</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- PROGRESS CONTAINER -->
+        <div id="progress-container" class="hidden bg-slate-900 border border-indigo-900/40 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div id="progress-spinner" class="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                    <i id="progress-success-icon" class="fa-solid fa-circle-check text-emerald-400 text-base hidden"></i>
+                    <span id="progress-status" class="font-medium text-slate-200 text-xs sm:text-sm">İşlem başlatılıyor...</span>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <span id="progress-timer" class="text-[11px] font-mono font-semibold bg-slate-950 border border-slate-850 text-indigo-300 px-2 py-0.5 rounded-md">⏱️ 0s</span>
+                    <span id="progress-percent" class="font-bold text-indigo-400 text-xs sm:text-sm">0%</span>
+                    <button type="button" id="cancel-analyze-btn" title="Analiz İşlemini İptal Et" class="text-[11px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 border border-rose-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all active:scale-95">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                        <span>İptal Et</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canlı Deşifre / Alt Durum Bilgilendirme -->
+            <div id="progress-substatus-box" class="hidden text-[11px] text-slate-400 bg-slate-950/80 border border-slate-850 px-3 py-1.5 rounded-xl flex items-center gap-2 overflow-hidden">
+                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping shrink-0"></span>
+                <span id="progress-substatus" class="font-mono text-slate-300 truncate italic">...</span>
+            </div>
+            
+            <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-850">
+                <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+            </div>
+
+            <!-- Steps indicator -->
+            <div class="grid grid-cols-3 gap-1 text-[10px] text-center pt-1 text-slate-500" id="pipeline-steps">
+                <div id="step-dl" class="py-1 rounded bg-slate-950 border border-slate-850">1. İndir</div>
+                <div id="step-tr" class="py-1 rounded bg-slate-950 border border-slate-850">2. Deşifre (Whisper)</div>
+                <div id="step-sc" class="py-1 rounded bg-slate-950 border border-slate-850">3. Puanla & Adaylar</div>
+            </div>
+        </div>
+
+        <!-- CURRENT PROJECT HEADER -->
+        <div id="project-header" class="hidden bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    <img id="project-thumb" src="" alt="Thumbnail" class="w-full h-full object-cover hidden">
+                    <i id="project-thumb-fallback" class="fa-solid fa-film text-slate-600 text-lg"></i>
+                </div>
+                <div>
+                    <h2 id="project-title" class="font-bold text-white text-sm sm:text-base line-clamp-1">Video Başlığı</h2>
+                    <p id="project-meta" class="text-xs text-slate-400">0 sn • Henüz render yapılmadı</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 self-end sm:self-auto">
+                <button id="new-video-btn" type="button" onclick="document.getElementById('video-url')?.focus(); window.scrollTo({top: 0, behavior: 'smooth'});"
+                    class="text-xs bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-plus text-indigo-400"></i>
+                    <span>Yeni Video</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- PROJECT HAS TRAILER BANNER -->
+        <div id="project-trailer-banner" class="hidden bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/60 border border-purple-500/40 rounded-2xl p-3.5 sm:p-4 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 flex-shrink-0">
+                    <i class="fa-solid fa-film text-base"></i>
+                </div>
+                <div class="space-y-0.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Akıllı Özet Hazır</span>
+                        <span id="project-trailer-banner-meta" class="text-xs text-slate-300 font-medium">9:16 Fragman</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Bu videodan yapay zeka ile kurgulanmış özet video hazırlandı.</p>
+                </div>
+            </div>
+            <button type="button" id="project-trailer-banner-btn"
+                class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold py-2 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 active:scale-95 transition-all cursor-pointer">
+                <i class="fa-solid fa-play"></i>
+                <span>Fragmanı İzle & Paylaş</span>
+            </button>
+        </div>
+
+        <!-- NATIVE APP MAIN SEGMENTED CONTROL (ADAYLAR vs HAZIR KLİPLER) -->
+        <div id="project-view-tabs" class="hidden sticky top-14 z-30 bg-slate-950/95 backdrop-blur-md pt-2 pb-2">
+            <div class="bg-slate-900 p-1.5 rounded-2xl border border-slate-800 grid grid-cols-2 gap-1.5 max-w-md mx-auto shadow-xl">
+                <button type="button" id="tab-btn-candidates" onclick="switchMainView('candidates')"
+                    class="py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Aday Kesitler</span>
+                    <span id="main-badge-candidates" class="bg-indigo-800 text-white text-[11px] px-2 py-0.5 rounded-full font-mono">0</span>
+                </button>
+                <button type="button" id="tab-btn-rendered" onclick="switchMainView('rendered')"
+                    class="py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-fire text-orange-400"></i>
+                    <span>Hazır Klipler</span>
+                    <span id="main-badge-rendered" class="bg-slate-800 text-emerald-400 text-[11px] px-2 py-0.5 rounded-full font-mono">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SECTION 1: CANDIDATE CLIPS (ADAYLAR) -->
+        <div id="candidates-container" class="hidden space-y-4">
+            <div class="flex items-center justify-between px-1">
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i>
+                        <span>Viral Aday Bölümler</span>
+                    </h2>
+                    <p class="text-[11px] text-slate-400">Yalnızca beğendiğiniz bölümün videosunu 9:16 olarak hızlıca render edin.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="render-all-candidates-btn" class="text-xs bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold px-3 py-1.5 rounded-xl shadow-md shadow-indigo-600/20 flex items-center gap-1.5 transition-all active:scale-95">
+                        <i class="fa-solid fa-layer-group text-xs text-yellow-300"></i>
+                        <span>Tümünü Sırayla Render Et</span>
+                    </button>
+                    <span id="candidates-count-badge" class="text-xs bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-full font-medium">10 Aday</span>
+                </div>
+            </div>
+
+            <!-- Video İçi Konu / Kelime Arama & Kırpma Çubuğu -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg space-y-2.5">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <div class="relative flex-1 flex items-center">
+                        <i class="fa-solid fa-magnifying-glass text-indigo-400 absolute left-3.5 text-xs"></i>
+                        <input type="text" id="topic-search-input" 
+                            placeholder="Video içinde konu veya cümle ara (örn: 'yapay zeka', 'para kazanmak')..." 
+                            class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-all">
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <!-- Öneri Butonu -->
+                        <button type="button" id="topic-search-btn" 
+                            class="flex-1 sm:flex-none bg-slate-800 hover:bg-slate-750 border border-slate-700 text-indigo-300 hover:text-white font-semibold text-xs py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                            <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                            <span>Videoda Bul</span>
+                        </button>
+
+                        <!-- Bul ve Hemen 9:16 Kırp Butonu -->
+                        <button type="button" id="topic-search-render-btn" 
+                            class="flex-1 sm:flex-none bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/25 active:scale-95 transition-all">
+                            <i class="fa-solid fa-scissors text-yellow-300"></i>
+                            <span>Bul & Hemen Kırp</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Manuel Dakika/Saniye Aralığı Kırpma Çubuğu (Açılır/Kapanır) -->
+                <div class="pt-2 border-t border-slate-850 flex flex-col gap-2 text-xs">
+                    <button type="button" id="toggle-manual-cut-btn" class="text-[11px] text-slate-400 hover:text-indigo-300 flex items-center gap-1 transition-colors self-start">
+                        <i class="fa-solid fa-sliders text-indigo-400"></i>
+                        <span>Özel Dakika / Saniye Aralığı Belirterek Kırp</span>
+                        <i id="manual-cut-arrow" class="fa-solid fa-chevron-down text-[10px] ml-0.5 transition-transform"></i>
+                    </button>
+                    
+                    <div id="manual-cut-fields" class="hidden w-full pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <div class="flex items-center gap-2 flex-1">
+                            <div class="relative flex-1">
+                                <span class="absolute left-2.5 top-2 text-[10px] text-slate-500 font-mono">BAŞLA:</span>
+                                <input type="text" id="manual-start-input" placeholder="01:20 veya 80" 
+                                    class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-14 pr-2.5 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <span class="text-slate-500 font-bold">-</span>
+                            <div class="relative flex-1">
+                                <span class="absolute left-2.5 top-2 text-[10px] text-slate-500 font-mono">BİTİŞ:</span>
+                                <input type="text" id="manual-end-input" placeholder="02:00 veya 120" 
+                                    class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-14 pr-2.5 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+                        <button type="button" id="manual-cut-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-1.5 px-3.5 rounded-lg flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow">
+                            <i class="fa-solid fa-scissors text-xs"></i> Bu Aralığı Kırp
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aday Kategori Filtreleme Sekmeleri (Tabs) -->
+            <div id="candidate-filter-tabs" class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+                <button type="button" data-filter="all" class="candidate-filter-btn active-tab bg-indigo-600 text-white font-semibold px-3 py-1.5 rounded-xl border border-indigo-500 flex items-center gap-1.5 transition-all shadow-sm shrink-0">
+                    <i class="fa-solid fa-layer-group text-xs"></i>
+                    <span>Tümü</span>
+                    <span id="tab-count-all" class="bg-indigo-700/80 text-white text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button type="button" data-filter="ai" class="candidate-filter-btn bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white font-medium px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-1.5 transition-all shrink-0">
+                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-400 text-xs"></i>
+                    <span>AI Adaylar</span>
+                    <span id="tab-count-ai" class="bg-slate-800 text-indigo-300 text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button type="button" data-filter="search" class="candidate-filter-btn bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white font-medium px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-1.5 transition-all shrink-0">
+                    <i class="fa-solid fa-magnifying-glass text-purple-400 text-xs"></i>
+                    <span>Konu Aramaları</span>
+                    <span id="tab-count-search" class="bg-slate-800 text-purple-300 text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button type="button" data-filter="custom" class="candidate-filter-btn bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white font-medium px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-1.5 transition-all shrink-0">
+                    <i class="fa-solid fa-scissors text-teal-400 text-xs"></i>
+                    <span>Özel Kesitler</span>
+                    <span id="tab-count-custom" class="bg-slate-800 text-teal-300 text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+            </div>
+
+            <!-- Candidates Grid -->
+            <div id="candidates-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Javascript ile kartlar üretilecek -->
+            </div>
+
+            <!-- Load More Candidates Button -->
+            <div class="text-center pt-2">
+                <button id="load-more-candidates-btn" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 mx-auto transition-all">
+                    <i class="fa-solid fa-plus text-indigo-400"></i>
+                    <span>Daha Fazla Öneri Bul (+10 Klip)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SECTION 2: RENDERED CLIPS (HAZIR 9:16 VİDEOLAR) -->
+        <div id="rendered-container" class="hidden space-y-4 pt-4 border-t border-slate-850">
+            <div class="flex items-center justify-between px-1">
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-fire text-orange-500"></i>
+                        <span>Hazır Dikey Klipler (9:16)</span>
+                    </h2>
+                    <p class="text-[11px] text-slate-400">Altyazıları giydirilmiş, izlemeye ve telefondan paylaşıma hazır klipler.</p>
+                </div>
+                <span id="rendered-total-badge" class="text-xs bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full font-medium">0 Klip</span>
+            </div>
+
+            <!-- Rendered Clips Grid -->
+            <div id="rendered-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <!-- Rendered Video Cards -->
+            </div>
+        </div>
+
+        </div> <!-- /#shorts-studio-view -->
+
+        <!-- SECTION: AKILLI FRAGMAN & ÖZET STÜDYOSU (TRAILER STUDIO) -->
+        <div id="trailer-studio-view" class="hidden space-y-6">
+            <!-- FRAGMAN AYAR KARTI -->
+            <div class="bg-slate-900/95 border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-xl shadow-black/50 backdrop-blur-sm space-y-5">
+                <div class="flex items-start justify-between border-b border-slate-800/60 pb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center shadow-md shadow-purple-500/20">
+                                <i class="fa-solid fa-film text-white text-xs"></i>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-bold text-white">Akıllı Video Fragmanı & Sinematik Özet</h2>
+                        </div>
+                        <p class="text-xs text-slate-400">
+                            Yapay zeka tüm videonun akışına hakim olur; kopukluk olmadan 60-90 saniyelik sinematik bir özet fragman üretir.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- KAYNAK SEÇİMİ (Mevcut Proje veya Yeni Link) -->
+                <div class="space-y-3">
+                    <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-layer-group text-purple-400"></i> Video Kaynağı
+                    </label>
+
+                    <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-xl border border-slate-850">
+                        <button type="button" id="trailer-src-url-btn" onclick="switchTrailerSourceMode('url')"
+                            class="py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-purple-600/30 text-purple-300 border border-purple-500/40 cursor-pointer">
+                            <i class="fa-brands fa-youtube text-red-500"></i>
+                            <span>YouTube Video Linki</span>
+                        </button>
+                        <button type="button" id="trailer-src-project-btn" onclick="switchTrailerSourceMode('project')"
+                            class="py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-400 hover:text-white cursor-pointer">
+                            <i class="fa-solid fa-box-archive text-amber-400"></i>
+                            <span>Mevcut Projelerim (0 sn)</span>
+                        </button>
+                    </div>
+
+                    <!-- 1. YouTube URL Girişi (Varsayılan Birincil Kaynak) -->
+                    <div id="trailer-url-input-container" class="space-y-1">
+                        <div class="relative flex items-center">
+                            <i class="fa-brands fa-youtube text-red-500 absolute left-3.5 text-sm pointer-events-none"></i>
+                            <input type="url" id="trailer-video-url" 
+                                placeholder="https://www.youtube.com/watch?v=... veya youtu.be/..."
+                                class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-24 py-3 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <button type="button" onclick="pasteToTrailerUrl()" 
+                                class="absolute right-2 top-2 bg-slate-800 hover:bg-slate-700 text-purple-300 hover:text-white text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1 transition-all active:scale-95 cursor-pointer">
+                                <i class="fa-regular fa-paste text-[11px]"></i>
+                                <span>Yapıştır</span>
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Yeni bir YouTube videosunun bağlantısını girin; yapay zeka analiz edip fragmanını kurgulasın.</p>
+                    </div>
+
+                    <!-- 2. Mevcut Proje Dropdown (İkincil Seçenek) -->
+                    <div id="trailer-project-select-container" class="hidden space-y-1">
+                        <select id="trailer-project-select" 
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">Projeler yükleniyor...</option>
+                        </select>
+                        <p class="text-[11px] text-emerald-400 flex items-center gap-1">
+                            <i class="fa-solid fa-bolt text-xs"></i> Daha önce işlenmiş projeler 0 sn bekleme süresiyle anında kurgulanır.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- KURGU AYARLARI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-slate-800/60">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="trailer-target-duration" class="block text-[11px] font-medium text-slate-400">Hedef Süre</label>
+                            <span id="trailer-duration-badge" class="text-[10px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded font-mono">1 dk</span>
+                        </div>
+                        <select id="trailer-target-duration" onchange="onTrailerDurationChange(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                            <option value="30">30 Saniye (⚡ Hızlı Teaser / Shorts)</option>
+                            <option value="60" selected>60 Saniye (🎬 1 Dakika Standart)</option>
+                            <option value="90">90 Saniye (🎥 1.5 Dakika Geniş Fragman)</option>
+                            <option value="120">120 Saniye (📌 2 Dakika Kısa Özet)</option>
+                            <option value="180">180 Saniye (🧠 3 Dakika Detaylı Özet)</option>
+                            <option value="300">300 Saniye (📚 5 Dakika Mini Belgesel)</option>
+                            <option value="600">600 Saniye (🎯 10 Dakika Kapsamlı Özet)</option>
+                            <option value="custom">⚙️ Özel Süre Belirle...</option>
+                        </select>
+                        <div id="trailer-custom-duration-box" class="hidden mt-2">
+                            <div class="relative">
+                                <input type="number" id="trailer-custom-duration" min="15" max="1800" step="10" placeholder="Örn: 240 (4 dk) veya 420 (7 dk)" 
+                                    class="w-full bg-slate-950 border border-purple-500/50 focus:border-purple-400 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none pr-12">
+                                <span class="absolute right-2.5 top-1.5 text-[10px] text-purple-400 font-mono font-semibold">SN</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">30-40+ dk uzun videolar için 180s (3 dk) veya 300s (5 dk) önerilir.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="trailer-aspect-ratio" class="block text-[11px] font-medium text-slate-400 mb-1">Video Formatı</label>
+                        <select id="trailer-aspect-ratio" onchange="onTrailerAspectChange(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                            <option value="9:16" selected>9:16 Dikey (Shorts / Reels)</option>
+                            <option value="16:9">16:9 Yatay (YouTube / Twitter)</option>
+                        </select>
+                    </div>
+                    <div id="trailer-crop-mode-container">
+                        <label for="trailer-crop-mode" class="block text-[11px] font-medium text-slate-400 mb-1">9:16 Görünüm Modu</label>
+                        <select id="trailer-crop-mode" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                            <option value="blur_background" selected>Bulanık Arka Plan (Önerilen)</option>
+                            <option value="crop_center">Ortadan Kırp (Tam Ekran Reels)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="trailer-style" class="block text-[11px] font-medium text-slate-400 mb-1">Kurgu Stili</label>
+                        <select id="trailer-style" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                            <option value="cinematic" selected>Sinematik (Bölüm Kartları ile)</option>
+                            <option value="dynamic">Akıcı / Hızlı Geçişler</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- OLUŞTUR BUTONU -->
+                <button type="button" id="submit-trailer-btn" onclick="startTrailerGeneration()"
+                    class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold py-3 sm:py-3.5 rounded-xl shadow-lg shadow-purple-600/30 transition-all active:scale-[0.98] text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Akıllı Fragmanı Oluştur</span>
+                </button>
+            </div>
+
+            <!-- FRAGMAN CANLI İLERLEME KARTI -->
+            <div id="trailer-progress-card" class="hidden bg-slate-900 border border-purple-500/30 rounded-2xl p-5 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                            <i class="fa-solid fa-film fa-spin text-sm"></i>
+                        </div>
+                        <div>
+                            <h3 id="trailer-progress-title" class="text-sm font-bold text-white">Yapay Zeka Fragmanı Kurguluyor...</h3>
+                            <p id="trailer-progress-msg" class="text-xs text-slate-400">Videonun hikaye akışı analiz ediliyor...</p>
+                        </div>
+                    </div>
+                    <span id="trailer-progress-pct" class="text-xs font-mono font-bold text-purple-400 bg-purple-500/10 px-2 py-1 rounded-lg">25%</span>
+                </div>
+                <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden">
+                    <div id="trailer-progress-bar" class="bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 h-full w-1/4 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- FRAGMAN SONUÇ KARTI -->
+            <div id="trailer-result-card" class="hidden space-y-6">
+                <!-- Video Player Container -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5 min-w-0 flex-1 pr-2">
+                            <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Hazır Fragman</span>
+                            <h3 id="trailer-result-title" class="text-base sm:text-lg font-bold text-white truncate">Akıllı Video Özeti</h3>
+                            <p id="trailer-result-orig-title" class="text-xs text-slate-400 truncate hidden"></p>
+                        </div>
+                        <span id="trailer-result-duration" class="text-xs text-slate-400 font-mono flex-shrink-0">00:58</span>
+                    </div>
+
+                    <!-- Player -->
+                    <div class="relative rounded-xl overflow-hidden bg-black flex justify-center items-center shadow-inner aspect-[9/16] sm:aspect-auto sm:max-h-[580px]">
+                        <video id="trailer-video-player" controls playsinline class="max-h-[580px] w-auto mx-auto rounded-xl"></video>
+                    </div>
+
+                    <!-- Düzenlenebilir Sosyal Medya Metin Alanları (Reels / TikTok / Shorts) -->
+                    <div class="space-y-3 pt-2 border-t border-slate-800/80">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-xs uppercase font-bold text-slate-400 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-heading text-purple-400"></i>
+                                    <span>Fragman Başlığı (Kısa & Vurucu)</span>
+                                </label>
+                                <span class="text-[10px] text-slate-500 font-mono">Reels / TikTok İçin</span>
+                            </div>
+                            <input type="text" id="trailer-final-title"
+                                onchange="saveTrailerTextChanges()"
+                                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white font-medium focus:border-purple-500 focus:outline-none transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="text-xs uppercase font-bold text-slate-400 block mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-align-left text-purple-400"></i>
+                                <span>Açıklama (Post Açıklaması)</span>
+                            </label>
+                            <textarea id="trailer-final-desc" rows="2"
+                                onchange="saveTrailerTextChanges()"
+                                class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-slate-300 focus:border-purple-500 focus:outline-none resize-none transition-colors"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="text-xs uppercase font-bold text-slate-400 block mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-hashtag text-purple-400"></i>
+                                <span>Konuya Özel Etiketler</span>
+                            </label>
+                            <input type="text" id="trailer-final-tags"
+                                onchange="saveTrailerTextChanges()"
+                                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-300 focus:border-purple-500 focus:outline-none transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Bütünleşik Sosyal Medya Aksiyon Butonları -->
+                    <div class="space-y-2.5 pt-2 border-t border-slate-800/80">
+                        <!-- 🚀 1. Ana Aksiyon: Telefonda Doğrudan Paylaş (Reels / TikTok / Shorts) -->
+                        <button type="button" id="trailer-share-btn" 
+                            class="w-full bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white text-sm font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-purple-600/25 active:scale-[0.98] transition-all min-h-[46px] cursor-pointer">
+                            <i class="fa-solid fa-paper-plane text-sm"></i>
+                            <span id="trailer-share-btn-text">Telefonda Doğrudan Paylaş (Reels / TikTok / Shorts)</span>
+                        </button>
+
+                        <!-- 2. Hızlı Aksiyonlar: Metni Kopyala & MP4 İndir -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" id="trailer-copy-btn" onclick="copyEditedTrailerCaption(this)"
+                                class="bg-slate-800 hover:bg-slate-750 border border-slate-750 text-indigo-300 hover:text-white text-xs font-semibold py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 transition-colors min-h-[40px] active:scale-95 cursor-pointer">
+                                <i class="fa-regular fa-copy text-xs"></i>
+                                <span>Metni Kopyala</span>
+                            </button>
+                            <a id="trailer-download-btn" href="#" download="trailer.mp4" target="_blank"
+                                class="bg-slate-800 hover:bg-slate-750 border border-slate-700 text-white text-xs font-semibold py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 transition-colors min-h-[40px] active:scale-95 cursor-pointer">
+                                <i class="fa-solid fa-download text-indigo-400 text-xs"></i>
+                                <span>Fragmanı İndir</span>
+                            </a>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 text-center flex items-center justify-center gap-1.5 pt-1">
+                        <i class="fa-solid fa-circle-info text-indigo-400 text-xs"></i>
+                        <span>Metin veya başlığı dilediğiniz gibi düzenleyebilirsiniz; paylaşıma otomatik yansır.</span>
+                    </p>
+                </div>
+
+                <!-- HİKAYE ÇİZELGESİ (INCLUDED ACTS) -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+                    <div class="border-b border-slate-800/80 pb-3">
+                        <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-timeline text-purple-400"></i>
+                            <span>Fragmana Dahil Edilen Kilit Sahneler & Hikaye Akışı</span>
+                        </h4>
+                        <p class="text-xs text-slate-400">Yapay zekanın videodan seçip mantık sırasıyla birleştirdiği bölümler:</p>
+                    </div>
+
+                    <div id="trailer-scenes-list" class="space-y-3">
+                        <!-- Javascript ile sahne kartları üretilecek -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- NATIVE MOBILE BOTTOM NAVIGATION BAR -->
+    <nav id="mobile-bottom-nav" class="hidden sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 border-t border-slate-850 backdrop-blur-xl px-2 py-1.5 flex items-center justify-around text-xs shadow-2xl safe-area-bottom">
+        <button type="button" onclick="switchMainView('candidates')" id="nav-btn-candidates" class="flex-1 py-1 flex flex-col items-center gap-1 text-indigo-400 font-semibold transition-all active:scale-95">
+            <i class="fa-solid fa-list-check text-base"></i>
+            <span class="text-[10px]">Adaylar</span>
+        </button>
+        <button type="button" onclick="switchMainView('rendered')" id="nav-btn-rendered" class="flex-1 py-1 flex flex-col items-center gap-1 text-slate-400 hover:text-white font-medium transition-all active:scale-95 relative">
+            <i class="fa-solid fa-fire text-base"></i>
+            <span class="text-[10px]">Hazır Klipler</span>
+            <span id="bottom-nav-rendered-badge" class="hidden absolute top-0.5 right-6 w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        </button>
+        <button type="button" onclick="switchStudioMode('trailer')" id="nav-btn-trailer" class="flex-1 py-1 flex flex-col items-center gap-1 text-slate-400 hover:text-white font-medium transition-all active:scale-95">
+            <i class="fa-solid fa-film text-base text-purple-400"></i>
+            <span class="text-[10px]">Fragman</span>
+        </button>
+        <button type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); document.getElementById('video-url')?.focus();" class="flex-1 py-1 flex flex-col items-center gap-1 text-slate-400 hover:text-white font-medium transition-all active:scale-95">
+            <i class="fa-solid fa-circle-plus text-base text-pink-400"></i>
+            <span class="text-[10px]">Yeni Video</span>
+        </button>
+        <button type="button" onclick="document.getElementById('open-history-btn')?.click();" class="flex-1 py-1 flex flex-col items-center gap-1 text-slate-400 hover:text-white font-medium transition-all active:scale-95">
+            <i class="fa-solid fa-folder-open text-base"></i>
+            <span class="text-[10px]">Geçmiş</span>
+        </button>
+    </nav>
+
+    <!-- DRAWER / MODAL: GEÇMİŞ PROJELER (HISTORY) -->
+    <div id="history-drawer" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex justify-end transition-opacity">
+        <div class="bg-slate-900 border-l border-slate-800 w-full max-w-md h-full flex flex-col p-5 space-y-4 overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                    <h3 class="font-bold text-white text-base">Geçmiş & İşlemler</h3>
+                </div>
+                <button id="close-history-btn" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 3 Sekmeli Geçmiş: Projeler, Fragmanlar & İşlem Görevleri -->
+            <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+                <button type="button" id="history-tab-projects" onclick="switchHistoryTab('projects')" class="flex-1 py-2 px-1.5 rounded-lg font-semibold transition-all bg-indigo-600 text-white shadow-sm flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-folder-check text-[11px]"></i>
+                    <span class="text-[11px]">Projeler</span>
+                    <span id="history-tab-projects-badge" class="bg-indigo-700/90 text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button type="button" id="history-tab-trailers" onclick="switchHistoryTab('trailers')" class="flex-1 py-2 px-1.5 rounded-lg font-medium text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-film text-purple-400 text-[11px]"></i>
+                    <span class="text-[11px]">Fragmanlar</span>
+                    <span id="history-tab-trailers-badge" class="bg-slate-800 text-purple-300 text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button type="button" id="history-tab-tasks" onclick="switchHistoryTab('tasks')" class="flex-1 py-2 px-1.5 rounded-lg font-medium text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-list-check text-[11px]"></i>
+                    <span class="text-[11px]">İşlemler</span>
+                    <span id="history-tab-tasks-badge" class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+            </div>
+
+            <!-- Sekme 1: Tamamlanan Kayıtlı Projeler -->
+            <div id="history-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <!-- Projeler JS ile listelenecek -->
+            </div>
+
+            <!-- Sekme 2: Tüm Kayıtlı Akıllı Fragmanlar / Özetler -->
+            <div id="history-trailers-list" class="hidden flex-1 overflow-y-auto space-y-3 pr-1">
+                <!-- Fragmanlar JS ile listelenecek -->
+            </div>
+
+            <!-- Sekme 3: Tüm İşlem & Görev Kayıtları (Devam eden, Kesintiye uğrayan, Hatalı, Başarılı) -->
+            <div id="history-tasks-list" class="hidden flex-1 overflow-y-auto space-y-3 pr-1">
+                <!-- Görevler JS ile listelenecek -->
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA INSTALL FLOATING BANNER (MOBİL VE MASAÜSTÜ TARAYICILAR) -->
+    <div id="pwa-install-banner" class="hidden fixed bottom-5 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md bg-slate-900/95 border border-indigo-500/40 rounded-2xl p-3.5 shadow-2xl backdrop-blur-md z-[105] flex items-center justify-between gap-3 animate-bounce-subtle">
+        <div class="flex items-center gap-3">
+            <img src="/static/icon-192.png" alt="ClipForge" class="w-10 h-10 rounded-xl shadow-md border border-indigo-500/30 flex-shrink-0">
+            <div>
+                <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>ClipForge AI Uygulaması</span>
+                    <span class="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1 rounded font-medium">Hızlı</span>
+                </h4>
+                <p class="text-[11px] text-slate-400 line-clamp-1">Ana ekranınıza ekleyip tam ekran kullanın.</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button id="pwa-banner-install-btn" class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-md shadow-purple-600/30 active:scale-95 transition-all">
+                Yükle
+            </button>
+            <button id="pwa-banner-close-btn" class="text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- IOS PWA INSTRUCTIONS MODAL -->
+    <div id="ios-pwa-modal" class="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-brands fa-apple text-xl text-white"></i>
+                    <h3 class="font-bold text-white text-sm">iPhone / iPad'e Yükle</h3>
+                </div>
+                <button id="close-ios-modal-btn" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-2.5 text-xs text-slate-300">
+                <p>ClipForge'u iPhone'unuzda tam ekran yerel bir uygulama gibi kullanmak için:</p>
+                <div class="flex items-start gap-2.5 bg-slate-950 p-2.5 rounded-xl border border-slate-850">
+                    <div class="w-6 h-6 rounded-lg bg-indigo-600/20 text-indigo-400 font-bold flex items-center justify-center shrink-0">1</div>
+                    <p>Safari'nin alt menüsündeki <i class="fa-solid fa-arrow-up-from-bracket text-indigo-400 font-bold mx-1"></i> <strong>Paylaş</strong> simgesine dokunun.</p>
+                </div>
+                <div class="flex items-start gap-2.5 bg-slate-950 p-2.5 rounded-xl border border-slate-850">
+                    <div class="w-6 h-6 rounded-lg bg-indigo-600/20 text-indigo-400 font-bold flex items-center justify-center shrink-0">2</div>
+                    <p>Aşağı kaydırıp <i class="fa-regular fa-square-plus text-indigo-400 font-bold mx-1"></i> <strong>"Ana Ekrana Ekle"</strong> seçeneğine tıklayın.</p>
+                </div>
+                <div class="flex items-start gap-2.5 bg-slate-950 p-2.5 rounded-xl border border-slate-850">
+                    <div class="w-6 h-6 rounded-lg bg-indigo-600/20 text-indigo-400 font-bold flex items-center justify-center shrink-0">3</div>
+                    <p>Sağ üstteki <strong>"Ekle"</strong> butonuna basın. Artık ClipForge ana ekranınızda bir uygulama gibi açılır!</p>
+                </div>
+            </div>
+            <button id="dismiss-ios-modal-btn" class="w-full bg-slate-800 hover:bg-slate-750 text-white font-medium py-2 rounded-xl text-xs transition-colors">
+                Anladım
+            </button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md bg-slate-900/95 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md transform translate-y-24 opacity-0 transition-all duration-300 z-[110] flex items-center gap-3 text-xs sm:text-sm">
+        <i id="toast-icon" class="fa-solid fa-check text-emerald-400 text-base"></i>
+        <span id="toast-message" class="flex-1 font-medium">İşlem tamamlandı</span>
+    </div>
+
+    <script src="/static/app.js?v=20260913_125500"></script>
+</body>
+</html>

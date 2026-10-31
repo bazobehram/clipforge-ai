@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+*.tar.gz
+*.zip
+__pycache__
+*.pyc
+.pytest_cache
+tests
+data/downloads/*
+!data/downloads/.gitkeep
+data/output/*
+!data/output/.gitkeep
+data/temp/*
+!data/temp/.gitkeep
+data/trailers/*
+!data/trailers/.gitkeep

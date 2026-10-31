@@ -1,0 +1,15 @@
+services:
+  clipforge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clipforge_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env.example
+    environment:
+      - PYTHONUNBUFFERED=1
